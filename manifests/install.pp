@@ -10,32 +10,35 @@
 # required by 'mesos::master' and 'mesos::slave'
 #
 class mesos::install(
-  $ensure         = 'present',
-  $repo_source    = undef,
-  $manage_python  = false,
-  $python_package = 'python',
+  $ensure         = 'present'
 ) {
-  # 'ensure_packages' requires puppetlabs/stdlib
-  #
-  # linux containers are now implemented natively
-  # with usage of cgroups, requires kernel >= 2.6.24
-  #
-  # Python is required for web GUI (mesos could be build without GUI)
-  if $manage_python {
-    ensure_resource('package', [$python_package],
-      {'ensure' => 'present', 'require' => Package['mesos']}
-    )
-  }
+ 
+   $version = "0.26.0"
+   $package_filename = "mesos_${version}-0.2.145.ubuntu1404_amd64.deb"
 
-  class {'mesos::repo':
-    source => $repo_source,
-  }
+   exec { "wget ${package_filename}":
+     command => "/usr/bin/wget -q https://s3.amazonaws.com/reddit-packages/any/amd64/${package_filename} -O /tmp/${package_filename}",
+     creates => "/tmp/${package_filename}",
+     cwd     => '/',
+     user    => 'root',
+   }
 
-  # a debian (or other binary package) must be available,
-  # see https://github.com/deric/mesos-deb-packaging
-  # for Debian packaging
-  package { 'mesos':
-    ensure  => $ensure,
-    require => Class['mesos::repo']
-  }
+   file { "/tmp/${package_filename}":
+     owner   => 'root',
+     group   => 'root',
+     mode    => '0644',
+     require => Exec["wget ${package_filename}"],
+   }
+
+   package { "libsvn1":
+     ensure => installed
+   }
+
+   package { "mesos":
+     provider => 'dpkg',
+     ensure => present,
+     source   => "/tmp/${package_filename}",
+     require  => [ Exec["wget ${package_filename}"], Package["libsvn1"] ],
+   }
+
 }

@@ -20,7 +20,7 @@
 class mesos(
   $ensure         = 'present',
   # if version is not defined, ensure will be used
-  $version        = undef,
+  $version        = "0.26.0",
   # master and slave creates separate logs automatically
   # TODO: currently not used
   $log_dir        = '/var/log/mesos',
@@ -52,10 +52,10 @@ class mesos(
   }
 
   class {'mesos::install':
-    ensure         => $mesos_ensure,
-    repo_source    => $repo,
-    manage_python  => $manage_python,
-    python_package => $python_package,
+    ensure         => $mesos_ensure
+#    repo_source    => $repo,
+#    manage_python  => $manage_python,
+#    python_package => $python_package,
   }
 
   class {'mesos::config':
